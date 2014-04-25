@@ -1,0 +1,6 @@
+{
+  "name": "hackernews-radiatus",
+  "dependencies": {
+    "cookie": "^0.1.2"
+  }
+}
