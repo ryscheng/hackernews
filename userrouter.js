@@ -61,6 +61,29 @@ function fixHeaders(old) {
   return result;
 }
 
+function addMissingProcess(user) {
+  if (!processes.hasOwnProperty(user)) {
+    processes[user] = {
+      port: (PORT + processes["count"]),
+      proc: null
+    };
+    processes["count"] += 1;
+  }
+
+  if (processes[user].proc == null) {
+    console.log("Spawning web server on port: " + processes[user].port + 
+                " for user: " + user);
+    processes[user].proc = child_process.spawn(BOOT, [
+      processes[user].port, 
+      user
+    ]);
+    processes[user].proc.stdout.on('data', function (data) {
+      console.log(user+':' + data);
+    });
+  }
+
+}
+
 function getForwardingPort(request) {
   if (!request.headers.hasOwnProperty("cookie")){
     console.log("Route: default: Missing cookies");
@@ -85,26 +108,8 @@ function getForwardingPort(request) {
   }
 
   var user = cookieUserMap[cook];
-  if (!processes.hasOwnProperty(user)) {
-    processes[user] = {
-      port: (PORT + processes["count"]),
-      proc: null
-    };
-    processes["count"] += 1;
-  }
-
-  if (processes[user].proc == null) {
-    console.log("Spawning web server on port: " + processes[user].port + 
-                " for user: " + user);
-    processes[user].proc = child_process.spawn(BOOT, [
-      processes[user].port, 
-      user
-    ]);
-    processes[user].proc.stdout.on('data', function (data) {
-      console.log(user+':' + data);
-    });
-  }
-
+  addMissingProcess(user);
+  
   console.log("Routing request for user " + user + " to port " +
     processes[user].port);
   return processes[user].port;
